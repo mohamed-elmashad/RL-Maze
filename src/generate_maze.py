@@ -11,10 +11,12 @@ class MazeEnv(Env):
 		self.start = start
 		self.end = end
 		self.mode = mode
-		self.action_space = Discrete(4)  # Up, Down, Left, Right
-		self.observation_space = Box(low=0, high=1, shape=(maze_size[0], maze_size[1]), dtype=np.uint8)
-		self.reward_range = (-1, 1)
-		self.metadata = {}
+		self.action_space = Discrete(4)
+		self.maze = np.zeros(self.maze_size)
+		self.maze[self.end] = 2  # End position
+		# self.observation_space = Box(low=0, high=2, shape=(self.maze_size[0], self.maze_size[1]), dtype=np.float32)
+		# observation_space - start and end
+		self.observation_space = Box(low=np.array([0, 0]), high=np.array([self.maze_size[0]-1, self.maze_size[1]-1]), dtype=np.float32)
 		self.visited = np.zeros(self.maze_size, dtype=bool)
 		# self.np_random = np.random.RandomState()
 		self.np_random = np.random.RandomState(seed=self.seed) 
@@ -29,16 +31,17 @@ class MazeEnv(Env):
 		self.player_image = pygame.image.load("img/giang-2.png")
 		self.player_image = pygame.transform.scale(self.player_image, (30, 30))  # Resize the image to fit the cell size
 
-		pygame.init()
+		# pygame.init()
 		self.screen_size = (maze_size[1] * 30, maze_size[0] * 30)
 		self.screen = pygame.display.set_mode(self.screen_size)
 		pygame.display.set_caption("Maze Environment")
 		self.clock = pygame.time.Clock()
 
 		self.init_audio()
+		self.generate_maze()
 
-		self.reset()
-
+		self.reset()		
+	
 	def init_audio(self):
 		if self.audio_on:
 			self.background_music.set_volume(0.35)
@@ -51,12 +54,17 @@ class MazeEnv(Env):
 
 	def reset(self):
 		self.player_pos = self.start
-		self.maze = np.zeros(self.maze_size)
-		self.maze[self.end] = 2  # End position
-		self.generate_maze()
-		self.background_music.play()
+		print(self.player_pos)
+
+		if self.mode != "gym": 
+			self.background_music.play()
 		self.render()  # Pass the path coordinates to render
+		print(self.maze)
+		print("before reset return")
 		return self.maze.copy(), {}
+	
+	def get_copy(self):
+		return self.maze.copy()
 
 	def step(self, action):
 		if action == 0:  # Up
@@ -70,9 +78,9 @@ class MazeEnv(Env):
 
 		if self.is_valid_move(new_pos):
 			self.player_pos = new_pos
-			print("TEST")
 			self.render()
 			if new_pos == self.end:
+				self.end_sound.play()
 				reward = 1
 				done = True
 			else:
@@ -86,7 +94,9 @@ class MazeEnv(Env):
 		return self.maze.copy(), reward, done, {}
 
 	def render(self):
+		print("Rendering")
 		self.screen.fill((230, 230, 230))
+		print("screen filled")
 		for row in range(self.maze_size[0]):
 			for col in range(self.maze_size[1]):
 				if self.maze[row][col] == 1:  # Wall
@@ -97,7 +107,6 @@ class MazeEnv(Env):
 		self.screen.blit(self.player_image, (self.player_pos[1] * 30, self.player_pos[0] * 30))
 		pygame.display.flip()
 		self.clock.tick(30)
-
 
 	def close(self):
 		pygame.mixer.quit()
@@ -136,28 +145,15 @@ class MazeEnv(Env):
 		# set all cells next to start as non-walls
 		self.maze[self.start[0] + 1, self.start[1]] = 0
 
-
-	def get_unvisited_neighbors(self, cell, visited):
-		neighbors = []
-		directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Left, Right, Up, Down
-		for direction in directions:
-			neighbor = (cell[0] + direction[0], cell[1] + direction[1])
-			if neighbor not in visited and 0 <= neighbor[0] < self.maze_size[0] and 0 <= neighbor[1] < self.maze_size[1]:
-				neighbors.append(neighbor)
-		return neighbors
-
-	def remove_wall(self, current_cell, next_cell):
-		dx = next_cell[0] - current_cell[0]
-		dy = next_cell[1] - current_cell[1]
-		wall = ((current_cell[0] + next_cell[0]) // 2, (current_cell[1] + next_cell[1]) // 2)
-		self.maze[wall] = 0  # Open the wall
-	
 	def play(self):
 		if self.mode == "human":
 			self.manual_play()
 		elif self.mode == "a_star_search":
 			print("A* Search")
 			self.a_star_play()
+		elif self.mode == "gym":
+			print("Gym")
+			self.gym_play()
 		else:
 			raise ValueError(f"Unknown mode: {self.mode}")
 
@@ -183,8 +179,6 @@ class MazeEnv(Env):
 						# wait 10 seconds then return
 						pygame.time.wait(2000)
 						return
-		
-
 
 	def a_star_search(self):
 		start = self.start
@@ -263,7 +257,6 @@ class MazeEnv(Env):
 		dy = abs(a[1] - b[1])
 		return np.sqrt(2) * min(dx, dy) + abs(dx - dy)
 
-
 	def get_neighbors(self, node):
 		neighbors = []
 		for direction in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
@@ -293,7 +286,6 @@ class MazeEnv(Env):
 
 	def a_star_play(self):
 		path = self.a_star_search()
-		print(path)
 		actions = self.path_to_actions(path)
 		while True:
 			for event in pygame.event.get():
@@ -316,6 +308,6 @@ if __name__ == "__main__":
 	x2 = np.random.randint(x - 5, x)
 	y2 = np.random.randint(y - 5, y)
 	end = (x2, y2)
-	env = MazeEnv(maze_size=(x, y), start=(0, 0), end=end, audio_on=True, mode="a_star_search")
+	env = MazeEnv(maze_size=(x, y), start=(0, 0), end=end, audio_on=True, mode="human")
 	env.play()
 	env.close()
