@@ -3,6 +3,7 @@ import numpy as np
 from gym import Env
 from gym.spaces import Discrete, Box
 import heapq
+import time
 
 class MazeEnv(Env):
 	def __init__(self, maze_size=(10, 10), start=(0, 0), end=(9, 9), seed=None, audio_on=False, mode="human"):
@@ -41,7 +42,7 @@ class MazeEnv(Env):
 		self.init_audio()
 		self.generate_maze()
 
-		self.reset()		
+		self.reset()
 	
 	def init_audio(self):
 		if self.audio_on:
@@ -60,6 +61,7 @@ class MazeEnv(Env):
 		self.generate_maze()
 		self.num_steps = 0
 
+
 	def reset(self):
 		self.player_pos = self.start
 		print("obv:", self.get_position())
@@ -70,9 +72,10 @@ class MazeEnv(Env):
 			self.background_music.play()
 		self.render()  # Pass the path coordinates to render
 		
-		state = np.array(self.player_pos)  # Convert position to NumPy array
-		print("Type of state:", type(state))  # Confirm the type of state
-		print("Shape of state:", state.shape)  # Check the shape of state
+		# state = np.array(self.player_pos)  # Convert position to NumPy array
+		# print("Type of state:", type(state))  # Confirm the type of state
+		# print("Shape of state:", state.shape)  # Check the shape of state
+
 	
 	def set_mode(self, mode):
 		self.mode = mode
@@ -144,7 +147,7 @@ class MazeEnv(Env):
 						pygame.draw.rect(self.screen, (0, 255, 0), (col * 30, row * 30, 30, 30))
 			# pygame.draw.rect(self.screen, (255, 0, 0), (self.player_pos[1] * 30, self.player_pos[0] * 30, 30, 30))
 			self.screen.blit(self.player_image, (self.player_pos[1] * 30, self.player_pos[0] * 30))
-			pygame.display.flip()
+			pygame.display.update()
 		self.clock.tick(10000)
 
 	def close(self):
@@ -339,8 +342,8 @@ class MazeEnv(Env):
 
 if __name__ == "__main__":
 	# end = random(x, y)
-	y = 44 - 20
-	x = 24 - 10
+	y = 5
+	x = 8
 	end = (x, y)
 	
 	x2 = np.random.randint(x - 5, x)
