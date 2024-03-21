@@ -11,11 +11,12 @@ class MazeEnv(Env):
 		self.start = start
 		self.end = end
 		self.mode = mode
+		self.player_pos = self.start
+		self.num_steps = 0
+		
 		self.action_space = Discrete(4)
 		self.maze = np.zeros(self.maze_size)
 		self.maze[self.end] = 2  # End position
-		# self.observation_space = Box(low=0, high=2, shape=(self.maze_size[0], self.maze_size[1]), dtype=np.float32)
-		# observation_space - start and end
 		self.observation_space = Box(low=np.array([0, 0]), high=np.array([self.maze_size[0]-1, self.maze_size[1]-1]), dtype=np.float32)
 		self.visited = np.zeros(self.maze_size, dtype=bool)
 		# self.np_random = np.random.RandomState()
@@ -28,10 +29,10 @@ class MazeEnv(Env):
 		self.step_sound = pygame.mixer.Sound("music/smw_coin.wav")
 		self.end_sound = pygame.mixer.Sound("music/finish.wav")
 
-		self.player_image = pygame.image.load("img/giang-2.png")
+		self.player_image = pygame.image.load("img/gunrock.png")
 		self.player_image = pygame.transform.scale(self.player_image, (30, 30))  # Resize the image to fit the cell size
 
-		# pygame.init()
+		pygame.init()
 		self.screen_size = (maze_size[1] * 30, maze_size[0] * 30)
 		self.screen = pygame.display.set_mode(self.screen_size)
 		pygame.display.set_caption("Maze Environment")
@@ -52,19 +53,33 @@ class MazeEnv(Env):
 			self.step_sound.set_volume(0)
 			self.end_sound.set_volume(0)
 
+	def hard_reset(self):
+		self.player_pos = self.start
+		self.maze = np.zeros(self.maze_size)
+		self.maze[self.end] = 2
+		self.generate_maze()
+		self.num_steps = 0
+
 	def reset(self):
 		self.player_pos = self.start
-		print(self.player_pos)
-
-		if self.mode != "gym": 
+		print("obv:", self.get_position())
+		print("state: ", self.player_pos)
+		print("Type of state:", type(self.player_pos))
+		
+		if self.mode != "gym":
 			self.background_music.play()
 		self.render()  # Pass the path coordinates to render
-		print(self.maze)
-		print("before reset return")
-		return self.maze.copy(), {}
+		
+		state = np.array(self.player_pos)  # Convert position to NumPy array
+		print("Type of state:", type(state))  # Confirm the type of state
+		print("Shape of state:", state.shape)  # Check the shape of state
 	
-	def get_copy(self):
-		return self.maze.copy()
+	def set_mode(self, mode):
+		self.mode = mode
+
+	def get_position(self):
+		# make return [ numpy array ]
+		return np.array(self.player_pos)
 
 	def step(self, action):
 		if action == 0:  # Up
@@ -77,36 +92,60 @@ class MazeEnv(Env):
 			new_pos = (self.player_pos[0], self.player_pos[1] + 1)
 
 		if self.is_valid_move(new_pos):
+			self.num_steps += 1
+			# print("VALID: ", new_pos)
 			self.player_pos = new_pos
 			self.render()
 			if new_pos == self.end:
 				self.end_sound.play()
-				reward = 1
+				# use steps to calculate reward
+				reward = 10
 				done = True
 			else:
 				reward = -0.1
 				done = False
 		else:
-			reward = -0.1
+			# print("INVALID: ", new_pos)
+			reward = -100
 			done = False
-		self.step_sound.play()
+		
+		if self.mode != "gym": self.step_sound.play()
 
 		return self.maze.copy(), reward, done, {}
 
+
+	def calculate_efficiency_reward(self):
+		# Calculate the reward based on the number of steps
+		print("steps: ", self.num_steps)
+		if self.num_steps < 50:
+			return 5
+		elif self.num_steps < 400:
+			return 3.5
+		elif self.num_steps > 4000:
+			return 2
+		else:
+			return 1
+
 	def render(self):
-		print("Rendering")
-		self.screen.fill((230, 230, 230))
-		print("screen filled")
-		for row in range(self.maze_size[0]):
-			for col in range(self.maze_size[1]):
-				if self.maze[row][col] == 1:  # Wall
-					pygame.draw.rect(self.screen, (0, 0, 0), (col * 30, row * 30, 30, 30))
-				elif self.maze[row][col] == 2:  # End
-					pygame.draw.rect(self.screen, (0, 255, 0), (col * 30, row * 30, 30, 30))
-		# pygame.draw.rect(self.screen, (255, 0, 0), (self.player_pos[1] * 30, self.player_pos[0] * 30, 30, 30))
-		self.screen.blit(self.player_image, (self.player_pos[1] * 30, self.player_pos[0] * 30))
-		pygame.display.flip()
-		self.clock.tick(30)
+		if self.mode != "gym":
+			# check if the game window was closed
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					return
+
+			# fill the screen with white
+			self.screen.fill((230, 230, 230))
+			for row in range(self.maze_size[0]):
+				for col in range(self.maze_size[1]):
+					if self.maze[row][col] == 1:  # Wall
+						pygame.draw.rect(self.screen, (0, 0, 0), (col * 30, row * 30, 30, 30))
+					elif self.maze[row][col] == 2:  # End
+						pygame.draw.rect(self.screen, (0, 255, 0), (col * 30, row * 30, 30, 30))
+			# pygame.draw.rect(self.screen, (255, 0, 0), (self.player_pos[1] * 30, self.player_pos[0] * 30, 30, 30))
+			self.screen.blit(self.player_image, (self.player_pos[1] * 30, self.player_pos[0] * 30))
+			pygame.display.flip()
+		self.clock.tick(10000)
 
 	def close(self):
 		pygame.mixer.quit()
@@ -153,7 +192,7 @@ class MazeEnv(Env):
 			self.a_star_play()
 		elif self.mode == "gym":
 			print("Gym")
-			self.gym_play()
+			# self.gym_play()
 		else:
 			raise ValueError(f"Unknown mode: {self.mode}")
 
@@ -298,11 +337,10 @@ class MazeEnv(Env):
 					pygame.time.wait(2000)
 					return
 
-
 if __name__ == "__main__":
 	# end = random(x, y)
-	y = 44
-	x = 24
+	y = 44 - 20
+	x = 24 - 10
 	end = (x, y)
 	
 	x2 = np.random.randint(x - 5, x)
