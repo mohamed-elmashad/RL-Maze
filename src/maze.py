@@ -123,7 +123,6 @@ def select_action(state, explore_rate):
 def get_explore_rate(t):
     return max(MIN_EXPLORE_RATE, min(0.79, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
 
-
 def get_learning_rate(t):
     return max(MIN_LEARNING_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
 
@@ -159,7 +158,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
     # Initialize the "maze" environment
     # env = gym.make(random.choice(maze_envs))
-    env = gm.MazeEnv(maze_size=(7, 8), start=(0, 0), end=(3, 3), mode="human")
+    env = gm.MazeEnv(maze_size=(17, 18), start=(0, 0), end=(16, 17), mode="human")
 
     '''
     Defining the environment related constants
