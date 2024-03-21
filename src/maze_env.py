@@ -5,6 +5,7 @@ from gym.spaces import Discrete, Box
 import rendering
 import generator
 import utils
+import numpy as np
 
 class MazeEnv(Env):
     def __init__(self, maze_size=(10, 10), start=(0, 0), end=(9, 9), seed=None, audio_on=False,
@@ -26,7 +27,9 @@ class MazeEnv(Env):
         self.num_steps = 0
 
         self.action_space = Discrete(4)
-        self.observation_space = Box(low=0, high=1, shape=(self.maze_size[0], self.maze_size[1]), dtype=int)
+        # self.observation_space = Box(low=0, high=1, shape=(self.maze_size[0], self.maze_size[1]), dtype=int)
+        self.observation_space = Box(low=np.array([0, 0]), high=np.array([self.maze_size[0]-1, self.maze_size[1]-1]), dtype=np.float32)
+
 
         self.reset()
         print(self.maze)
@@ -55,7 +58,8 @@ class MazeEnv(Env):
             self.num_steps += 1
             self.state = new_pos
             print("player_pos:", self.state)
-            self.render()
+            if self.mode != "AI":
+                self.render()
             print(self.end, self.state, self.end == self.state)
             if self.state == self.end:
                 self.done = True
@@ -73,7 +77,8 @@ class MazeEnv(Env):
     
     def play(self):
         while not self.done:
-            action = self.rendering.manual_control()
+            if self.mode == "human":
+                action = self.rendering.manual_control()
             if action is not None:
                 print("ACTION: ", action)
                 _, _, done, _ = self.step(action)
@@ -85,6 +90,13 @@ class MazeEnv(Env):
       
     def render(self):
         self.rendering.draw(self.state, self.mode)
+    
+    def get_state(self):
+        return self.state
+
+    def set_mode(self, mode):
+        self.mode = mode
+        self.rendering.set_mode(mode)
     
 
 

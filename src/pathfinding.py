@@ -28,7 +28,6 @@ def movement_cost(current_node, neighbor):
     else:
         return 1
     
-
 def a_star_path(start, end):
     open_list = []  # Use a list to maintain the order of elements
     open_dict = {}  # Use a dictionary for faster lookups and updates
@@ -85,4 +84,19 @@ def a_star_path(start, end):
                 heapq.heappush(open_list, (neighbor_f, neighbor, current_node))
     return None # No path found
 
+def path_to_actions(path):
+    actions = []
+    for i in range(len(path) - 1):
+        current_node = path[i]
+        next_node = path[i + 1]
+        dx, dy = next_node[0] - current_node[0], next_node[1] - current_node[1]
+        if dx == 1:
+            actions.append(2)  # down
+        elif dx == -1:
+            actions.append(0)  # up
+        elif dy == 1:
+            actions.append(3)  # right
+        elif dy == -1:
+            actions.append(1)  # left
+    return actions
 
