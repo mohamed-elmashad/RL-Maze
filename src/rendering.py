@@ -15,12 +15,12 @@ class Rendering:
 
         self.screen = pygame.display.set_mode((self.width * self.square_size, self.height * self.square_size))
         self.clock = pygame.time.Clock()
-        # self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(None, 36)
 
         self.player_image = pygame.image.load("img/gunrock.png")
         self.player_image = pygame.transform.scale(self.player_image, (self.square_size, self.square_size))
         
-        # pygame.mixer.init()
+        pygame.mixer.init()
         self.maze = maze
         self.maze_size = np.size(maze, 0), np.size(maze, 1)
         print("rendering maze x: ", self.maze_size[0], " y: ", self.maze_size[1])
@@ -89,3 +89,13 @@ class Rendering:
             self.background_music.set_volume(0)
             self.step_sound.set_volume(0)
             self.end_sound.set_volume(0)
+
+    def play_audio(self, sound):
+        if sound == "step":
+            self.step_sound.play()
+        elif sound == "end":
+            print("END SOUND")
+            self.end_sound.play()
+            pygame.time.wait(1000)
+        elif sound == "background":
+            self.background_music.play()

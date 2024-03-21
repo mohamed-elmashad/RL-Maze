@@ -11,7 +11,8 @@ class MazeEnv(Env):
                 generator = generator.MazeGenerator, rendering = rendering.Rendering, mode="human"):
         self.maze_size = maze_size
         self.start = start
-        self.end = end
+        self.end = (end[1], end[0])
+        
         self.seed = seed
 
         self.audio_on = audio_on
@@ -21,6 +22,7 @@ class MazeEnv(Env):
 
         self.player_pos = self.start
         self.rendering = rendering
+        self.rendering.init_audio(self.audio_on)
         self.num_steps = 0
 
         self.action_space = Discrete(4)
@@ -35,6 +37,8 @@ class MazeEnv(Env):
         self.step_count = 0
         self.reward = 0
         self.render()
+        if self.mode != "gym":
+            self.rendering.play_audio("background")
         return self.state
 
     def step(self, action):
@@ -52,15 +56,16 @@ class MazeEnv(Env):
             self.state = new_pos
             print("player_pos:", self.state)
             self.render()
+            print(self.end, self.state, self.end == self.state)
             if self.state == self.end:
                 self.done = True
                 self.reward = 10
             else:
                 self.reward = -0.1
+                self.rendering.play_audio("step")
         else:
             self.reward = -100
 
-        # self.render()
         return self.maze.copy(), self.reward, self.done, {}
 
     def close(self):
@@ -68,21 +73,18 @@ class MazeEnv(Env):
     
     def play(self):
         while not self.done:
-        # while True:
             action = self.rendering.manual_control()
             if action is not None:
                 print("ACTION: ", action)
-
-            # self.render()
                 _, _, done, _ = self.step(action)
 
                 if done:
                     print("You've reached the end!")
-
+                    self.rendering.play_audio("end")
+                    return
       
     def render(self):
         self.rendering.draw(self.state, self.mode)
-        # return self.rendering.get_events()
     
 
 
