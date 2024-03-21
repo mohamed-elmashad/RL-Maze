@@ -57,18 +57,19 @@ class MazeEnv(Env):
         if utils.is_valid_move(new_pos, self.maze_size, self.maze):
             self.num_steps += 1
             self.state = new_pos
-            print("player_pos:", self.state)
+            # print("player_pos:", self.state)
             if self.mode != "AI":
                 self.render()
-            print(self.end, self.state, self.end == self.state)
+            # print(self.end, self.state, self.end == self.state)
             if self.state == self.end:
                 self.done = True
                 self.reward = 10
             else:
                 self.reward = -0.1
-                self.rendering.play_audio("step")
+                # self.rendering.play_audio("step")
         else:
             self.reward = -100
+            done = False
 
         return self.maze.copy(), self.reward, self.done, {}
 
@@ -80,7 +81,7 @@ class MazeEnv(Env):
             if self.mode == "human":
                 action = self.rendering.manual_control()
             if action is not None:
-                print("ACTION: ", action)
+                # print("ACTION: ", action)
                 _, _, done, _ = self.step(action)
 
                 if done:
@@ -92,7 +93,7 @@ class MazeEnv(Env):
         self.rendering.draw(self.state, self.mode)
     
     def get_state(self):
-        return self.state
+        return np.array(self.state)
 
     def set_mode(self, mode):
         self.mode = mode

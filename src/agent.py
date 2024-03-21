@@ -3,11 +3,8 @@
 import numpy as np
 import math
 import random
-import generate_maze as gm
-import maze_env as maze
-import time
-import generator as generate
-import rendering as render
+# import time
+
 
 
 class Agent:
@@ -25,7 +22,7 @@ class Agent:
         self.discount_factor = 0.99
         self.min_explore_rate = 0.001
         self.min_learning_rate = 0.1
-        self.decay_factor = np.prod(self.env.maze_size, dtype=float) / 10.0
+        self.decay_factor = np.prod(self.env.maze_size, dtype=float) / 20.0
 
     def select_action(self, state, explore_rate):
         if random.random() < explore_rate:
@@ -40,26 +37,6 @@ class Agent:
         return max(self.min_learning_rate, min(0.8, 1.0 - math.log10((t + 1) / self.decay_factor)))
 
     def state_to_index(self, state):
-        # indices = []  # Initialize list to store indices for each dimension
-        # for dimension_index in range(len(state)):  # Loop through dimensions of the state
-        #     current_state = state[dimension_index]  # Get the current state value for the dimension
-        #     lower_bound, upper_bound = self.bounds[dimension_index]  # Get lower and upper bounds for the dimension
-            
-        #     # Check if current state is below or equal to the lower bound
-        #     if current_state <= lower_bound:
-        #         index = 0  # Set index to 0 if state is below or equal to lower bound
-        #     # Check if current state is above or equal to the upper bound
-        #     elif current_state >= upper_bound:
-        #         index = self.maze_size[dimension_index] - 1  # Set index to last position if state is above or equal to upper bound
-        #     else:
-        #         # Calculate index based on linear scaling between bounds and maze size
-        #         bound_width = upper_bound - lower_bound
-        #         offset = (self.maze_size[dimension_index] - 1) * lower_bound / bound_width
-        #         scaling = (self.maze_size[dimension_index] - 1) / bound_width
-        #         index = int(round(scaling * current_state - offset))
-            
-        #     indices.append(index)  # Add calculated index to the list of indices
-
         indices = []
         for i in range(len(state)):
             if state[i] <= self.bounds[i][0]:
@@ -100,7 +77,6 @@ class Agent:
             print("Next state: ", next_state)
             print("Best Q: ", np.amax(self.q_table[next_state]))
             print("Q-table: ", self.q_table)
-            time.sleep(1.5)
             print("\n")
 
     def log(self):
@@ -130,11 +106,11 @@ class Agent:
                 total_reward += reward
 
                 best_q = np.amax(self.q_table[state])
-                self.q_table[state_0 + (action,)] += learning_rate * (reward + self.discount_factor * best_q - self.q_table[state_0 + (action,)])
+                self.q_table[state_0 + (action,)] += learning_rate * (reward + self.discount_factor * (best_q) - self.q_table[state_0 + (action,)])
 
                 self.debug(episode, t, explore_rate, learning_rate, state, action, reward, state_0)
-                
                 state_0 = state
+
                 if done:
                     print(f"Episode {episode} finished after {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
                     if t < np.prod(self.env.maze_size) and total_reward > 2:
@@ -153,31 +129,4 @@ class Agent:
             explore_rate = self.get_explore_rate(episode)
             learning_rate = self.get_learning_rate(episode)
 
-            
-
-def main():
-    x = 7
-    y = 7
-    
-    maze_size = (x, y)
-    start = (0, 0)
-    end = (x - 1, y - 1)
-    seed = 0
-    audio = False
-    maze_type = "random"
-
-    generator = generate.MazeGenerator(maze_size, maze_type, seed)
-    rendering = render.Rendering(x, y, generator.get_maze(), audio=audio)
-
-    print("MAZE: ", generator.get_maze())
-    env = maze.MazeEnv(maze_size, start, end, seed, audio_on=audio, rendering=rendering, generator=generator, mode="human")
-
-    env.render()
-    # env.play()
-    # env.close()
-
-    solver = Agent(env, num_episodes=50000, debug_mode=1)
-    solver.simulate()
-
-if __name__ == "__main__":
-    main()
+        
