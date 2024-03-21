@@ -1,3 +1,5 @@
+# DEPRECATED, HERE IN CASE SOMETHING BREAKS
+
 import pygame
 import numpy as np
 from gym import Env
@@ -216,6 +218,7 @@ class MazeEnv(Env):
 					else:
 						continue
 					_, _, done, _ = self.step(action)
+					print("player at: ", self.player_pos)
 					if done:
 						print("You reached the end!")
 						# wait 10 seconds then return

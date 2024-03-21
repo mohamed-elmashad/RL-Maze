@@ -25,6 +25,7 @@ def simulate():
     print("DSADAD")
 
     for episode in range(NUM_EPISODES):
+        env.reset()
         print(f'episode: {episode}')
 
         # Reset the environment
@@ -55,35 +56,35 @@ def simulate():
             state_0 = state
 
             # Print data
-            if DEBUG_MODE == 2:
-                print("\nEpisode = %d" % episode)
-                print("t = %d" % t)
-                print("Action: %d" % action)
-                print("State: %s" % str(state))
-                print("Reward: %f" % reward)
-                print("Best Q: %f" % best_q)
-                print("Explore rate: %f" % explore_rate)
-                print("Learning rate: %f" % learning_rate)
-                print("Streaks: %d" % num_streaks)
-                print("")
+            # if DEBUG_MODE == 2:
+            #     print("\nEpisode = %d" % episode)
+            #     print("t = %d" % t)
+            #     print("Action: %d" % action)
+            #     print("State: %s" % str(state))
+            #     print("Reward: %f" % reward)
+            #     print("Best Q: %f" % best_q)
+            #     print("Explore rate: %f" % explore_rate)
+            #     print("Learning rate: %f" % learning_rate)
+            #     print("Streaks: %d" % num_streaks)
+            #     # print("Q")
+            #     print("")
 
-            elif DEBUG_MODE == 1:
-                if done or t >= MAX_T - 1:
-                    print("\nEpisode = %d" % episode)
-                    print("t = %d" % t)
-                    print("Explore rate: %f" % explore_rate)
-                    print("Learning rate: %f" % learning_rate)
-                    print("Streaks: %d" % num_streaks)
-                    print("Total reward: %f" % total_reward)
-                    print("")
+            # elif DEBUG_MODE == 1:
+            #     if done or t >= MAX_T - 1:
+            #         print("\nEpisode = %d" % episode)
+            #         print("t = %d" % t)
+            #         print("Explore rate: %f" % explore_rate)
+            #         print("Learning rate: %f" % learning_rate)
+            #         print("Streaks: %d" % num_streaks)
+            #         print("Total reward: %f" % total_reward)
+            #         print("")
 
             # if env.is_game_over():
             #     sys.exit()
 
             if done:
                 # env.hard_reset()
-                print(q_table)
-                env.reset()
+                # print(q_table)
                 print("Episode %d finished after %f time steps with total reward = %f (streak %d)."
                       % (episode, t, total_reward, num_streaks))
 
@@ -151,14 +152,14 @@ def state_to_bucket(state):
             bucket_index = int(round(scaling * state[i] - offset))
         bucket_indices.append(bucket_index)
 
-        print("bucket_indices: ", bucket_indices)
     return tuple(bucket_indices)
 
 
 
 if __name__ == "__main__":
     # Initialize the "maze" environment
-    env = gm.MazeEnv(maze_size=(25, 35), start=(0, 0), end=(24, 24), mode="gym")
+    # env = gym.make(random.choice(maze_envs))
+    env = gm.MazeEnv(maze_size=(7, 8), start=(0, 0), end=(3, 3), mode="human")
 
     '''
     Defining the environment related constants

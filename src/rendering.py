@@ -75,6 +75,11 @@ class Rendering:
                     continue
         return None
     
+    def a_star_control(self, actions):
+        for action in actions:
+            return action
+         
+
     # Close the game
     def close(self):
         pygame.quit()

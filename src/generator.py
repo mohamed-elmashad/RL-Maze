@@ -7,6 +7,7 @@ class MazeGenerator:
     def __init__(self, maze_size, maze_type="random", seed=0):
         self.maze_size = maze_size
         self.seed = seed
+        self.seedRandom = np.random.RandomState(seed)
         self.maze = np.zeros(self.maze_size)
         self.start = (0, 0)
         self.end = (self.maze_size[0] - 1, self.maze_size[1] - 1)
@@ -43,7 +44,10 @@ class MazeGenerator:
                     neighbors.append((nx, ny))
 
             if neighbors:
-                next_x, next_y = neighbors[random.randint(0, len(neighbors) - 1)]
+                if self.seed != None:
+                    next_x, next_y = neighbors[self.seedRandom.randint(0, len(neighbors))]
+                else:
+                    next_x, next_y = neighbors[random.randint(0, len(neighbors) - 1)]
                 self.maze[(x + next_x) // 2, (y + next_y) // 2] = 0
                 stack.append((next_x, next_y))
             else:
