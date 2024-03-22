@@ -11,13 +11,13 @@ class Rendering:
         pygame.init()
         self.width = width
         self.height = height
-        self.square_size = 30
+        self.square_size = 50
 
         self.screen = pygame.display.set_mode((self.width * self.square_size, self.height * self.square_size))
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
 
-        self.player_image = pygame.image.load("img/gunrock.png")
+        self.player_image = pygame.image.load("img/Prof.png")
         self.player_image = pygame.transform.scale(self.player_image, (self.square_size, self.square_size))
         
         pygame.mixer.init()
