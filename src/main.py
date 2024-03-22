@@ -17,7 +17,7 @@ def main():
     maze_type = "random"
     generator = generate.MazeGenerator(maze_size, maze_type, seed)
     rendering = render.Rendering(x, y, generator.get_maze(), audio=audio)
-    env = maze.MazeEnv(maze_size, start, end, seed, audio_on=audio, rendering=rendering, generator=generator, mode="AI")
+    env = maze.MazeEnv(maze_size, start, end, seed, audio_on=audio, rendering=rendering, generator=generator, mode="Human")
     solver = agent.Agent(env, num_episodes=50000, debug_mode=3)
 
     print("MAZE: ", generator.get_maze())
@@ -28,7 +28,6 @@ def main():
     if auto_log:
         solver.auto_log()
     elif AI:
-        print("episode, t, action, state x, state y, reward, explore rate, learning rate, next state x, next state y, best Q")
         solver.simulate()
     else:
         env.render()

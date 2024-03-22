@@ -198,7 +198,7 @@ class Agent:
                 state_0 = state
 
                 if done:
-                    # print(f"Episode {episode} finished after {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
+                    print(f"Episode {episode} finished after {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
                     if t < np.prod(self.env.maze_size):
                         num_streaks += 1
                     else:
@@ -206,7 +206,7 @@ class Agent:
                     num_timeouts = 0
                     break
                 elif t >= self.max_steps - 1:
-                    # print(f"Episode {episode} timed out at {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
+                    print(f"Episode {episode} timed out at {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
                     num_timeouts += 1
                     break
             
