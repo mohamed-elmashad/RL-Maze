@@ -28,7 +28,7 @@ class MazeEnv(Env):
 
         self.action_space = Discrete(4)
         # self.observation_space = Box(low=0, high=1, shape=(self.maze_size[0], self.maze_size[1]), dtype=int)
-        self.observation_space = Box(low=np.array([0, 0]), high=np.array([self.maze_size[0]-1, self.maze_size[1]-1]), dtype=np.float32)
+        self.observation_space = Box(low=np.array([0, 0]), high=np.array([self.maze_size[1]-1, self.maze_size[0]-1]), dtype=np.float32)
 
 
         self.reset()
