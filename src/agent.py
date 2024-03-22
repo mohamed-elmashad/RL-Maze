@@ -11,15 +11,15 @@ import time
 
 
 class Agent:
-    def __init__(self, maze_env, num_episodes=50000, debug_mode=0, logging_enabled=False, max_steps=None):
+    def __init__(self, maze_env, num_episodes=50000, debug_mode=0, max_steps=None):
         self.env = maze_env
         self.num_episodes = num_episodes
         self.debug_mode = debug_mode
-        self.logging_enabled = logging_enabled
         self.maze_size = tuple((self.env.observation_space.high + np.ones(self.env.observation_space.shape)).astype(int))
         self.max_steps = max_steps or np.prod(self.env.maze_size) * 100
         self.bounds = list(zip(self.env.observation_space.low, self.env.observation_space.high))
         self.q_table = np.zeros(self.maze_size + (self.env.action_space.n,), dtype=float)
+        self.logging_enabled = False
         
         # constants
         self.discount_factor = 0.99
@@ -27,6 +27,8 @@ class Agent:
         self.min_learning_rate = 0.1
         self.decay_type = "log"
         self.decay_factor = np.prod(self.env.maze_size, dtype=float) / 10.0
+
+        self.original_working_dir = os.getcwd()
 
     def select_action(self, state, explore_rate):
         if random.random() < explore_rate:
@@ -75,6 +77,11 @@ class Agent:
         return tuple(indices)  # Return tuple of indices for each dimension
 
     def debug(self, episode, t, explore_rate, learning_rate, state, action, reward, next_state):
+        # mode 0: no debug
+        # mode 1: important debug
+        # mode 2: all debug
+        # mode 3: csv log (fast edit) TODO remove this mode
+
         if self.debug_mode == 1:
             print("\nEpisode: ", episode)
             print("Timestep: ", t)
@@ -86,8 +93,6 @@ class Agent:
             print("Next state: ", next_state)
             print("Best Q: ", np.amax(self.q_table[next_state]))
             print("\n")
-
-           
         elif self.debug_mode == 2:
             print("\nEpisode: ", episode)
             print("Timestep: ", t)
@@ -100,10 +105,14 @@ class Agent:
             print("Best Q: ", np.amax(self.q_table[next_state]))
             print("Q-table: ", self.q_table)
             print("\n")
+        elif self.debug_mode == 3:
+            # csv_row = f"{episode},{t},{action},{state},{reward},{explore_rate},{learning_rate},{next_state},{np.amax(self.q_table[next_state])}"
+            csv_row = f"{episode},{t},{action},{state[0]}, {state[1]},{reward},{explore_rate},{learning_rate},{next_state[0]},{next_state[1]},{np.amax(self.q_table[next_state])}"
+            print(csv_row)
 
 
     def log(self, episode, total_reward, num_steps, title):
-        csv_file = title + '_log.csv'
+        csv_file = f"{title}.csv"
         with open(csv_file, 'a', newline='') as csvfile:
             fieldnames = ['Episode', 'Total Reward', 'Num Steps']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -112,40 +121,55 @@ class Agent:
                 writer.writeheader()
 
             writer.writerow({'Episode': episode, 'Total Reward': total_reward, 'Num Steps': num_steps})
+            
+    def auto_log(self, num_times=10, extensive=False):
+        self.logging_enabled = True
+        learning_rates = ["log", "exponential"]
+        discount_factors = [0.99, 0.995]
 
-    def auto_log(self, num_times=10):
-        learning_rates = ["log", "linear", "exponential"]
-        discount_factors = [0.99, 0.995, 0.95, 0.9]
-
-        win_rewards = [1, 10, 100, 1000]
-        step_rewards = [-0.1, -0.01, -0.001, -0.0001]
+        win_rewards = [10, 100, 1000, 1000000]
+        step_rewards = [-0.1, -0.01, -1]
         wall_rewards = [-100, -1000, -10000]
 
-        decay_factors = [10, 100, 1000, 10000]
-
-
         logs_folder = "data"
-        for run_id in range(num_times):
-            run_folder = os.path.join(logs_folder, f"run_{run_id}")
+        attempt_num = 1
+        while os.path.exists(os.path.join(logs_folder, f"{self.maze_size}_attempt_{attempt_num}")):
+            attempt_num += 1
+
+        attempt_folder = f"{self.maze_size}_attempt_{attempt_num}"
+
+
+        for run_id in range(1, num_times + 1):
+            os.chdir(self.original_working_dir)  # Change back to the original working directory
+            run_folder = os.path.join(logs_folder, attempt_folder, f"run_{run_id}")
             os.makedirs(run_folder, exist_ok=True)
             os.chdir(run_folder)
-            time.sleep(60)
-        
-            # lr = learning rate, df = discount factor, wr = win reward, sr = step reward, wr = wall reward, dy = decay factor
-            for lr, df, wr, sr, wr, dy in it.product(learning_rates, discount_factors, win_rewards, step_rewards, wall_rewards, decay_factors):
-                log_name = f"maze_{self.maze_size}_lr_{lr}_df_{df}_wr_{wr}_sr_{sr}_wr_{wr}_dy_{dy}"
-                self.discount_factor = df
-                self.set_decay_type(lr)
-                self.env.set_reward("win", wr)
-                self.env.set_reward("step", sr)
-                self.env.set_reward("wall", wr)                
-                
-                self.decay_factor = dy
-                self.simulate()
-                self.log(log_name)
 
-    def simulate(self):
+            if extensive:
+                # lr = learning rate, df = discount factor, wr = win reward, sr = step reward, wr = wall reward, dy = decay factor
+                for lr, df, wr, sr, wr in it.product(learning_rates, discount_factors, win_rewards, step_rewards, wall_rewards):
+                    log_name = f"_lr_{lr}_df_{df}_wr_{wr}_sr_{sr}_wr_{wr}"
+                    print(f"\n Running learning rate: {lr}, discount factor: {df}, win reward: {wr}, step reward: {sr}, wall reward: {wr}")
+                    self.discount_factor = df
+                    self.set_decay_type(lr)
+                    self.env.set_reward("widn", wr)
+                    self.env.set_reward("step", sr)
+                    self.env.set_reward("wall", wr)                
+                    
+                    self.simulate(log_name)
+            else:
+                for df, winr, wallr in it.product(discount_factors, win_rewards, wall_rewards):
+                    log_name = f"_df_{df}_winr_{winr}_wallr_{wallr}"
+                    print(f"\n Running discount factor: {df}, win reward: {winr} wall reward: {wallr}")
+                    self.discount_factor = df
+                    self.env.set_reward("win", winr)
+                    self.env.set_reward("wall", wallr)
+
+                    self.simulate(log_name)
+                
+    def simulate(self, log_name=None):
         num_streaks = 0
+        num_timeouts = 0
         learning_rate = self.get_learning_rate(0)
         explore_rate = self.get_explore_rate(0)
         self.env.reset()
@@ -174,26 +198,33 @@ class Agent:
                 state_0 = state
 
                 if done:
-                    if self.logging_enabled:
-                        self.log(episode, total_reward, t, "q_learning")
-                    print(f"Episode {episode} finished after {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
+                    # print(f"Episode {episode} finished after {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
                     if t < np.prod(self.env.maze_size):
                         num_streaks += 1
                     else:
                         num_streaks = 0
+                    num_timeouts = 0
                     break
                 elif t >= self.max_steps - 1:
-                    print(f"Episode {episode} timed out at {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
+                    # print(f"Episode {episode} timed out at {t} time steps with total reward = {total_reward} (streak {num_streaks}).")
+                    num_timeouts += 1
                     break
             
-            if abs(total_reward - np.mean(prev_total_reward)) < 0.1:
+            if np.std(prev_total_reward) < 0.1 and episode > 30:
                 print(f'Coneverged at episode {episode}')
                 break
             else:
                 prev_total_reward.pop(0)
                 prev_total_reward.append(total_reward)
 
+            if self.logging_enabled:
+                self.log(episode, total_reward, t, log_name)
+            
+            if num_timeouts > 20:
+                print("Timing out")
+                break
+
             explore_rate = self.get_explore_rate(episode)
-            learning_rate = self.get_learning_rate(episode)
+            learning_rate = self.get_learning_rate( episode)
 
         

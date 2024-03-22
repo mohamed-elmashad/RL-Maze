@@ -24,7 +24,7 @@ class MazeGenerator:
     def generate_maze(self):
         if self.maze_type == "random":
             self.random_maze()
-        elif self.maze_type == "empty":
+        elif self.maze_type == "empty": # TODO fix
             self.empty_maze()
         else:
             raise ValueError("Invalid maze type")
