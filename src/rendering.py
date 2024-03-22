@@ -11,7 +11,7 @@ class Rendering:
         pygame.init()
         self.width = width
         self.height = height
-        self.square_size = 50
+        self.square_size = 25
 
         self.screen = pygame.display.set_mode((self.width * self.square_size, self.height * self.square_size))
         self.clock = pygame.time.Clock()

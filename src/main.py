@@ -6,8 +6,8 @@ import rendering as render
 import agent as agent
 
 def main():
-    x = 15
-    y = 14
+    x = 50
+    y = 30
     
     maze_size = (x, y)
     start = (0, 0)
@@ -19,9 +19,9 @@ def main():
     rendering = render.Rendering(x, y, generator.get_maze(), audio=audio)
 
     print("MAZE: ", generator.get_maze())
-    env = maze.MazeEnv(maze_size, start, end, seed, audio_on=audio, rendering=rendering, generator=generator, mode="human")
+    env = maze.MazeEnv(maze_size, start, end, seed, audio_on=audio, rendering=rendering, generator=generator, mode="AI")
 
-    AI = False
+    AI = True
     
     if AI:
         solver = agent.Agent(env, num_episodes=50000, debug_mode=0)

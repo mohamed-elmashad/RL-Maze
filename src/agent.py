@@ -3,12 +3,11 @@
 import numpy as np
 import math
 import random
-# import time
 
 
 
 class Agent:
-    def __init__(self, maze_env, num_episodes=50000, debug_mode=0, logging_enabled=False, max_steps=None, render_mode=0):
+    def __init__(self, maze_env, num_episodes=50000, debug_mode=0, logging_enabled=False, max_steps=None):
         self.env = maze_env
         self.num_episodes = num_episodes
         self.debug_mode = debug_mode
@@ -22,19 +21,34 @@ class Agent:
         self.discount_factor = 0.99
         self.min_explore_rate = 0.001
         self.min_learning_rate = 0.1
-        self.decay_factor = np.prod(self.env.maze_size, dtype=float) / 20.0
+        self.decay_factor = np.prod(self.env.maze_size, dtype=float) / 10.0
 
     def select_action(self, state, explore_rate):
         if random.random() < explore_rate:
             return self.env.action_space.sample()
         else:
             return int(np.argmax(self.q_table[state]))
+        
+    def get_explore_rate(self, t, decay_type="log"):
+        if decay_type == "log":
+            return max(self.min_explore_rate, min(0.8, 1.0 - math.log10((t + 1) / self.decay_factor)))
+        elif decay_type == "linear":
+            return max(self.min_explore_rate, min(1, 1.0 - (t + 1) / self.decay_factor))
+        elif decay_type == "exponential":
+            return max(self.min_explore_rate, min(0.8, 0.99 ** (t / self.decay_factor)))
+        else:
+            raise ValueError("Invalid decay type")
 
-    def get_explore_rate(self, t):
-        return max(self.min_explore_rate, min(0.79, 1.0 - math.log10((t + 1) / self.decay_factor)))
 
-    def get_learning_rate(self, t):
-        return max(self.min_learning_rate, min(0.8, 1.0 - math.log10((t + 1) / self.decay_factor)))
+    def get_learning_rate(self, t, decay_type="log"):
+        if decay_type == "log":
+            return max(self.min_learning_rate, min(0.8, 1.0 - math.log10((t + 1) / self.decay_factor)))
+        elif decay_type == "linear":
+            return max(self.min_learning_rate, min(1, 1.0 - (t + 1) / self.decay_factor))
+        elif decay_type == "exponential":
+            return max(self.min_learning_rate, min(0.8, 0.99 ** (t / self.decay_factor)))
+        else:
+            raise ValueError("Invalid decay type")
 
     def state_to_index(self, state):
         indices = []
@@ -79,8 +93,6 @@ class Agent:
             print("Q-table: ", self.q_table)
             print("\n")
 
-    def log(self):
-        return None
 
     def simulate(self):
         num_streaks = 0
@@ -90,11 +102,9 @@ class Agent:
         
         for episode in range(self.num_episodes):
             self.env.reset()
-            print(f'episode: {episode}')
 
             pos = self.env.get_state()
             state_0 = self.state_to_index(pos)
-            # state = self.env.get_state()
             total_reward = 0
 
             for t in range(self.max_steps):

@@ -13,7 +13,8 @@ class MazeEnv(Env):
         self.maze_size = maze_size
         self.start = start
         self.end = (end[1], end[0])
-        
+
+        self.rewards = { "win": 10, "wall": -100, "step": -0.1 }
         self.seed = seed
 
         self.audio_on = audio_on
@@ -27,9 +28,7 @@ class MazeEnv(Env):
         self.num_steps = 0
 
         self.action_space = Discrete(4)
-        # self.observation_space = Box(low=0, high=1, shape=(self.maze_size[0], self.maze_size[1]), dtype=int)
         self.observation_space = Box(low=np.array([0, 0]), high=np.array([self.maze_size[1]-1, self.maze_size[0]-1]), dtype=np.float32)
-
 
         self.reset()
         print(self.maze)
@@ -39,7 +38,8 @@ class MazeEnv(Env):
         self.done = False
         self.step_count = 0
         self.reward = 0
-        self.render()
+        if self.mode != "AI":
+            self.render()
         if self.mode != "gym":
             self.rendering.play_audio("background")
         return self.state
@@ -63,12 +63,12 @@ class MazeEnv(Env):
             # print(self.end, self.state, self.end == self.state)
             if self.state == self.end:
                 self.done = True
-                self.reward = 10
+                self.reward = self.rewards["win"]
             else:
-                self.reward = -0.1
+                self.reward = self.rewards["step"]
                 # self.rendering.play_audio("step")
         else:
-            self.reward = -100
+            self.reward = self.rewards["wall"]
             done = False
 
         return self.maze.copy(), self.reward, self.done, {}
@@ -99,6 +99,8 @@ class MazeEnv(Env):
         self.mode = mode
         self.rendering.set_mode(mode)
     
+    def set_reward(self, reward="win", value=10):
+        self.rewards[reward] = value
 
 
         
