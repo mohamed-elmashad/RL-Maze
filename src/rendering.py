@@ -20,13 +20,14 @@ class Rendering:
         self.player_image = pygame.image.load("img/Prof.png")
         self.player_image = pygame.transform.scale(self.player_image, (self.square_size, self.square_size))
         
-        pygame.mixer.init()
+        if audio: pygame.mixer.init()
         self.maze = maze
         self.maze_size = np.size(maze, 0), np.size(maze, 1)
         print("rendering maze x: ", self.maze_size[0], " y: ", self.maze_size[1])
-        self.background_music = pygame.mixer.Sound("music/2-02. Driftveil City.wav")
-        self.step_sound = pygame.mixer.Sound("music/smw_coin.wav")
-        self.end_sound = pygame.mixer.Sound("music/finish.wav")
+        if audio:
+            self.background_music = pygame.mixer.Sound("music/2-02. Driftveil City.wav")
+            self.step_sound = pygame.mixer.Sound("music/smw_coin.wav")
+            self.end_sound = pygame.mixer.Sound("music/finish.wav")
         self.init_audio(audio)
 
     def draw(self, player_pos, mode="human"):
