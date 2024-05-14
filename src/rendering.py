@@ -28,7 +28,7 @@ class Rendering:
             self.background_music = pygame.mixer.Sound("music/2-02. Driftveil City.wav")
             self.step_sound = pygame.mixer.Sound("music/smw_coin.wav")
             self.end_sound = pygame.mixer.Sound("music/finish.wav")
-        self.init_audio(audio)
+            self.init_audio(audio)
 
     def draw(self, player_pos, mode="human"):
         if mode != "gym":
@@ -91,10 +91,6 @@ class Rendering:
            self.background_music.set_volume(0.35)
            self.step_sound.set_volume(0.65)
            self.end_sound.set_volume(0.99)
-        else:
-            self.background_music.set_volume(0)
-            self.step_sound.set_volume(0)
-            self.end_sound.set_volume(0)
 
     def play_audio(self, sound):
         if sound == "step":
@@ -103,5 +99,5 @@ class Rendering:
             print("END SOUND")
             self.end_sound.play()
             pygame.time.wait(1000)
-        elif sound == "background":
-            self.background_music.play()
+        # elif sound == "background":
+            # self.background_music.play()
