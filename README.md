@@ -63,17 +63,10 @@ The project uses several key technologies:
 
 | Component | Purpose |
 |-----------|----------|
-| PyTorch | Neural network implementation |
 | NumPy | Array operations and calculations |
 | Pygame | Maze visualization |
-
-### Training Process
-
-The agent implements either:
-- Epsilon-greedy policy
-- Softmax behavior policy with temperature equal to epsilon
-
-The starting position is dynamically sampled to ensure comprehensive exploration of the maze, with the agent gradually exploring further areas as training progresses.
+| Matplotlib | Performance metrics plotting |
+| Gymnasium | Reinforcement learning environment |
 
 ## Features
 
